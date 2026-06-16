@@ -53,31 +53,43 @@
     mode: "0755"
   tags: base
 
-- name: Apply basic kernel hardening parameters
-  ansible.posix.sysctl:
-    name: "{{ item.key }}"
-    value: "{{ item.value }}"
-    sysctl_file: /etc/sysctl.d/99-autoprovisionx.conf
-    reload: true
-    state: present
-  loop:
-    - {key: "net.ipv4.tcp_syncookies", value: "1"}
-    - {key: "net.ipv4.conf.all.rp_filter", value: "1"}
-    - {key: "net.ipv4.conf.default.rp_filter", value: "1"}
-    - {key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1"}
-    - {key: "kernel.dmesg_restrict", value: "1"}
-  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"
+- name: Apply basic kernel hardening parameters safely
   tags: base
+  block:
+    - name: Apply basic kernel hardening parameters
+      ansible.posix.sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        sysctl_file: /etc/sysctl.d/99-autoprovisionx.conf
+        reload: true
+        state: present
+      loop:
+        - {key: "net.ipv4.tcp_syncookies", value: "1"}
+        - {key: "net.ipv4.conf.all.rp_filter", value: "1"}
+        - {key: "net.ipv4.conf.default.rp_filter", value: "1"}
+        - {key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1"}
+        - {key: "kernel.dmesg_restrict", value: "1"}
+  rescue:
+    - name: Verify sysctl failure is within Docker
+      ansible.builtin.fail:
+        msg: "sysctl kernel hardening failed outside Docker. This is a real error."
+      when: ansible_virtualization_type != 'docker'
 
 # --- Fail2Ban ---
 
-- name: Ensure fail2ban service is started and enabled
-  ansible.builtin.service:
-    name: fail2ban
-    state: started
-    enabled: true
-  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"
+- name: Ensure fail2ban service is started and enabled safely
   tags: base
+  block:
+    - name: Ensure fail2ban service is started and enabled
+      ansible.builtin.service:
+        name: fail2ban
+        state: started
+        enabled: true
+  rescue:
+    - name: Verify fail2ban failure is within Docker
+      ansible.builtin.fail:
+        msg: "Fail2ban service failed to start outside Docker. This is a real error."
+      when: ansible_virtualization_type != 'docker'
 
 - name: Print base role completion status
   ansible.builtin.debug:

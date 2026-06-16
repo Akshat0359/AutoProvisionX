@@ -45,11 +45,17 @@
     direction: in
   tags: firewall
 
-- name: Enable UFW firewall (non-interactive)
-  community.general.ufw:
-    state: enabled
-  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"
+- name: Enable UFW firewall safely
   tags: firewall
+  block:
+    - name: Enable UFW firewall (non-interactive)
+      community.general.ufw:
+        state: enabled
+  rescue:
+    - name: Verify UFW failure is within Docker
+      ansible.builtin.fail:
+        msg: "UFW enable failed outside Docker. This is a real error."
+      when: ansible_virtualization_type != 'docker'
 
 - name: Print firewall status
   ansible.builtin.debug:
