@@ -63,7 +63,7 @@
       register: nginx_response
       retries: 5
       delay: 3
-      until: nginx_response.status == 200
+      until: nginx_response.status | default(0) == 200
       tags: ["verify", "webapp"]
 
     - name: Print verification result

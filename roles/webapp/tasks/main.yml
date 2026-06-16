@@ -66,6 +66,7 @@
 - name: Assert nginx container is in running state
   ansible.builtin.assert:
     that:
+      - webapp_nginx_container_info.exists
       - webapp_nginx_container_info.container.State.Running
     fail_msg: "Nginx container '{{ nginx_container_name }}' is NOT running!"
     success_msg: "Nginx container '{{ nginx_container_name }}' is running ✅"
