@@ -26,6 +26,7 @@ RUN apt-get update -qq && \
       gnupg \
       lsb-release \
       ufw \
+      iptables \
       iproute2 \
       procps \
       systemd \
@@ -33,6 +34,9 @@ RUN apt-get update -qq && \
       dbus \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Fix UFW IPv6 issue in Docker
+RUN sed -i 's/IPV6=yes/IPV6=no/' /etc/default/ufw
 
 # Create symlink so 'python' resolves to python3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
