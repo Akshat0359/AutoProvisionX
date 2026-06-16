@@ -13,6 +13,8 @@
     name: ufw
     state: present
     update_cache: false
+  environment:
+    DEBIAN_FRONTEND: noninteractive
   tags: firewall
 
 - name: Set UFW default policy — deny all incoming
@@ -46,6 +48,7 @@
 - name: Enable UFW firewall (non-interactive)
   community.general.ufw:
     state: enabled
+  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"
   tags: firewall
 
 - name: Print firewall status

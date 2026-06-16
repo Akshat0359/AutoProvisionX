@@ -124,7 +124,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
 
           echo "Waiting for container initialization..."
-          sleep 5
+          sleep 10
 
           docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "table {{.Names}}\t{{.Status}}"
           echo "✅ Test target container is running"

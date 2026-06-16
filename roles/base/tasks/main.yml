@@ -25,7 +25,12 @@
     upgrade: dist
     autoremove: true
     autoclean: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
   register: base_apt_upgrade_result
+  retries: 3
+  delay: 10
+  until: base_apt_upgrade_result is success
   tags: base
 
 - name: Install common Linux packages
@@ -33,6 +38,8 @@
     name: "{{ common_packages }}"
     state: present
     update_cache: false   # Already updated above
+  environment:
+    DEBIAN_FRONTEND: noninteractive
   tags: base
 
 # --- Kernel & OS Hardening ---
@@ -59,6 +66,7 @@
     - {key: "net.ipv4.conf.default.rp_filter", value: "1"}
     - {key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1"}
     - {key: "kernel.dmesg_restrict", value: "1"}
+  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"
   tags: base
 
 # --- Fail2Ban ---
@@ -68,6 +76,7 @@
     name: fail2ban
     state: started
     enabled: true
+  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"
   tags: base
 
 - name: Print base role completion status
