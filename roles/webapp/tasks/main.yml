@@ -60,13 +60,13 @@
 - name: Verify nginx container is running
   community.docker.docker_container_info:
     name: "{{ nginx_container_name }}"
-  register: nginx_container_info
+  register: webapp_nginx_container_info
   tags: webapp
 
 - name: Assert nginx container is in running state
   ansible.builtin.assert:
     that:
-      - nginx_container_info.container.State.Running
+      - webapp_nginx_container_info.container.State.Running
     fail_msg: "Nginx container '{{ nginx_container_name }}' is NOT running!"
     success_msg: "Nginx container '{{ nginx_container_name }}' is running ✅"
   tags: webapp

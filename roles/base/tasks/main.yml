@@ -25,7 +25,7 @@
     upgrade: dist
     autoremove: true
     autoclean: true
-  register: apt_upgrade_result
+  register: base_apt_upgrade_result
   tags: base
 
 - name: Install common Linux packages
