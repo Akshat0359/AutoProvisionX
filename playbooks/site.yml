@@ -1,0 +1,77 @@
+---
+# ============================================================
+# AutoProvisionX — Main Site Playbook
+# ============================================================
+# Runs all roles in dependency order against target_servers.
+# Each role is tagged so individual steps can be run in isolation.
+#
+# Usage:
+#   Full run:         ansible-playbook playbooks/site.yml
+#   Single role:      ansible-playbook playbooks/site.yml --tags docker
+#   Dry run:          ansible-playbook playbooks/site.yml --check
+# ============================================================
+
+- name: AutoProvisionX — Automated Linux Server Provisioning
+  hosts: target_servers
+  gather_facts: true
+  become: true
+
+  pre_tasks:
+    - name: Verify Ansible meets minimum version requirement
+      ansible.builtin.assert:
+        that: "ansible_version.full is version('2.14', '>=')"
+        fail_msg: "Ansible 2.14+ is required. Found: {{ ansible_version.full }}"
+        success_msg: "Ansible version OK: {{ ansible_version.full }}"
+      tags: always
+
+    - name: Print provisioning banner
+      ansible.builtin.debug:
+        msg:
+          - "=============================================="
+          - "  AutoProvisionX Provisioning Started"
+          - "  Host    : {{ inventory_hostname }}"
+          - "  OS      : {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "  App     : {{ app_name }} v{{ app_version }}"
+          - "  Env     : {{ app_environment }}"
+          - "=============================================="
+      tags: always
+
+  roles:
+    - role: base
+      tags: ["base", "packages"]
+
+    - role: users
+      tags: ["users", "security"]
+
+    - role: firewall
+      tags: ["firewall", "security"]
+
+    - role: docker
+      tags: ["docker", "containers"]
+
+    - role: webapp
+      tags: ["webapp", "nginx", "deploy"]
+
+  post_tasks:
+    - name: Verify nginx is reachable inside the target container
+      ansible.builtin.uri:
+        url: "http://localhost:{{ nginx_host_port }}"
+        method: GET
+        status_code: 200
+        return_content: true
+        timeout: 10
+      register: nginx_response
+      retries: 5
+      delay: 3
+      until: nginx_response.status == 200
+      tags: ["verify", "webapp"]
+
+    - name: Print verification result
+      ansible.builtin.debug:
+        msg:
+          - "=============================================="
+          - "  ✅ Provisioning COMPLETE"
+          - "  Nginx responded with HTTP {{ nginx_response.status }}"
+          - "  URL: http://localhost:{{ nginx_host_port }}"
+          - "=============================================="
+      tags: ["verify", "webapp"]

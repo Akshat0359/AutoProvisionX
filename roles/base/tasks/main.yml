@@ -1,0 +1,76 @@
+---
+# ============================================================
+# Role: base — System Bootstrap & Common Package Installation
+# ============================================================
+# Idempotent: All tasks are safe to re-run.
+# Tags: base, packages
+# ============================================================
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+  tags: base
+
+# --- Package Cache & Upgrades ---
+
+- name: Update apt package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600   # Only update if cache is older than 1 hour
+  changed_when: false
+  tags: base
+
+- name: Upgrade all installed packages to latest
+  ansible.builtin.apt:
+    upgrade: dist
+    autoremove: true
+    autoclean: true
+  register: apt_upgrade_result
+  tags: base
+
+- name: Install common Linux packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+    update_cache: false   # Already updated above
+  tags: base
+
+# --- Kernel & OS Hardening ---
+
+- name: Ensure /etc/sysctl.d directory exists
+  ansible.builtin.file:
+    path: /etc/sysctl.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: base
+
+- name: Apply basic kernel hardening parameters
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-autoprovisionx.conf
+    reload: true
+    state: present
+  loop:
+    - {key: "net.ipv4.tcp_syncookies", value: "1"}
+    - {key: "net.ipv4.conf.all.rp_filter", value: "1"}
+    - {key: "net.ipv4.conf.default.rp_filter", value: "1"}
+    - {key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1"}
+    - {key: "kernel.dmesg_restrict", value: "1"}
+  tags: base
+
+# --- Fail2Ban ---
+
+- name: Ensure fail2ban service is started and enabled
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
+  tags: base
+
+- name: Print base role completion status
+  ansible.builtin.debug:
+    msg: "Base role complete — {{ common_packages | length }} packages ensured."
+  tags: base

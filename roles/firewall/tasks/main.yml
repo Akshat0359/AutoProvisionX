@@ -1,0 +1,54 @@
+---
+# ============================================================
+# Role: firewall — UFW Firewall Configuration
+# ============================================================
+# Sets default deny-in / allow-out policy, then opens only
+# the ports defined in group_vars/all.yml (allowed_tcp_ports).
+# Idempotent: All tasks are safe to re-run.
+# Tags: firewall, security
+# ============================================================
+
+- name: Install UFW firewall package
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: false
+  tags: firewall
+
+- name: Set UFW default policy — deny all incoming
+  community.general.ufw:
+    default: deny
+    direction: incoming
+  tags: firewall
+
+- name: Set UFW default policy — allow all outgoing
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+  tags: firewall
+
+- name: Allow configured TCP ports through firewall
+  community.general.ufw:
+    rule: allow
+    port: "{{ item | string }}"
+    proto: tcp
+    comment: "AutoProvisionX — allowed port"
+  loop: "{{ allowed_tcp_ports }}"
+  tags: firewall
+
+- name: Allow loopback interface (localhost traffic)
+  community.general.ufw:
+    rule: allow
+    interface: lo
+    direction: in
+  tags: firewall
+
+- name: Enable UFW firewall (non-interactive)
+  community.general.ufw:
+    state: enabled
+  tags: firewall
+
+- name: Print firewall status
+  ansible.builtin.debug:
+    msg: "UFW enabled. Allowed TCP ports: {{ allowed_tcp_ports | join(', ') }}"
+  tags: firewall

@@ -1,0 +1,98 @@
+---
+# ============================================================
+# Role: docker — Docker Engine & Compose Plugin Installation
+# ============================================================
+# Installs Docker CE from the official Docker apt repository.
+# Ensures Docker service is enabled and running.
+# Idempotent: All tasks are safe to re-run.
+# Tags: docker, containers
+# ============================================================
+
+# --- Prerequisites ---
+
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: docker
+
+- name: Remove old Docker packages if present
+  ansible.builtin.apt:
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+    purge: false
+  tags: docker
+
+# --- Docker Official GPG Key ---
+
+- name: Download Docker official GPG key
+  ansible.builtin.get_url:
+    url: "{{ docker_apt_key_url }}"
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+    force: false
+  tags: docker
+
+- name: Convert Docker GPG key to binary format
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /etc/apt/keyrings/docker.gpg /etc/apt/keyrings/docker.asc"
+    creates: /etc/apt/keyrings/docker.gpg
+  tags: docker
+
+# --- Docker Apt Repository ---
+
+- name: Add Docker official apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker_apt_repo }}"
+    state: present
+    filename: docker
+    update_cache: true
+  tags: docker
+
+# --- Install Docker Packages ---
+
+- name: Install Docker CE and Compose plugin
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+    update_cache: false
+  notify: Restart Docker
+  tags: docker
+
+# --- Docker Service Management ---
+
+- name: Ensure Docker service is started and enabled at boot
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+  tags: docker
+
+# --- Add deploy user to docker group ---
+
+- name: Add deploy user to docker group
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    groups: docker
+    append: true
+  tags: docker
+
+- name: Verify Docker is functional
+  ansible.builtin.command:
+    cmd: docker --version
+  register: docker_version_output
+  changed_when: false
+  tags: docker
+
+- name: Print Docker version
+  ansible.builtin.debug:
+    msg: "Docker installed: {{ docker_version_output.stdout }}"
+  tags: docker

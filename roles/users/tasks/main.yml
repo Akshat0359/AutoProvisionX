@@ -1,0 +1,78 @@
+---
+# ============================================================
+# Role: users — Deploy User Creation & SSH Hardening
+# ============================================================
+# Creates a non-root deploy user with:
+#   - Passwordless sudo
+#   - SSH public key authentication
+#   - Proper home directory and shell
+# Idempotent: All tasks are safe to re-run.
+# Tags: users, security
+# ============================================================
+
+- name: Ensure deploy group exists
+  ansible.builtin.group:
+    name: "{{ deploy_user }}"
+    state: present
+  tags: users
+
+- name: Create deploy user with locked password
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    groups: "{{ deploy_user_groups }}"
+    shell: /bin/bash
+    create_home: true
+    password: "!"   # Locked — SSH key auth only
+    comment: "AutoProvisionX Deploy User"
+    state: present
+  tags: users
+
+- name: Create .ssh directory for deploy user
+  ansible.builtin.file:
+    path: "/home/{{ deploy_user }}/.ssh"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0700"
+  tags: users
+
+- name: Install SSH authorized key for deploy user
+  ansible.posix.authorized_key:
+    user: "{{ deploy_user }}"
+    key: "{{ deploy_ssh_public_key }}"
+    state: present
+    exclusive: false
+  tags: users
+
+- name: Configure passwordless sudo for deploy user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ deploy_user }}"
+    content: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  tags: users
+
+- name: Harden SSH daemon configuration
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    backup: true
+    validate: "/usr/sbin/sshd -t -f %s"
+  loop:
+    - {regexp: "^#?PermitRootLogin", line: "PermitRootLogin no"}
+    - {regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no"}
+    - {regexp: "^#?PubkeyAuthentication", line: "PubkeyAuthentication yes"}
+    - {regexp: "^#?X11Forwarding", line: "X11Forwarding no"}
+    - {regexp: "^#?MaxAuthTries", line: "MaxAuthTries 3"}
+  notify: Restart SSHD
+  tags: users
+
+- name: Print users role completion status
+  ansible.builtin.debug:
+    msg: "Deploy user '{{ deploy_user }}' configured with SSH key auth and passwordless sudo."
+  tags: users

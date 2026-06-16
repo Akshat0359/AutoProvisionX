@@ -1,0 +1,26 @@
+---
+# ansible-lint configuration for AutoProvisionX
+profile: production
+
+# Exclude paths from linting
+exclude_paths:
+  - .git/
+  - .github/
+  - scripts/
+
+# Rules to skip (with justification)
+skip_list:
+  - yaml[line-length]   # Long URLs/commands are unavoidable
+  - no-changed-when     # Intentionally used in verification tasks
+
+# Warn-only rules (won't fail CI)
+warn_list:
+  - experimental
+
+# Enforce these additional rules
+enable_list:
+  - no-log-password
+  - no-same-owner
+
+# Treat warnings as errors in CI
+strict: false

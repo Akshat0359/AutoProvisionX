@@ -1,0 +1,82 @@
+---
+# ============================================================
+# Role: webapp — Containerized Nginx Application Deployment
+# ============================================================
+# Generates index.html from Jinja2 template, creates host
+# directory, and deploys the nginx container via Docker.
+# Container restarts only when content actually changes.
+# Idempotent: All tasks are safe to re-run.
+# Tags: webapp, nginx, deploy
+# ============================================================
+
+- name: Ensure nginx content directory exists on host
+  ansible.builtin.file:
+    path: "{{ nginx_content_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+  tags: webapp
+
+- name: Render index.html from Jinja2 template
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ nginx_content_dir }}/index.html"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  notify: Restart Nginx Container
+  tags: webapp
+
+- name: Pull latest nginx image
+  community.docker.docker_image:
+    name: "{{ nginx_image }}"
+    source: pull
+    force_source: false
+  tags: webapp
+
+- name: Deploy nginx container
+  community.docker.docker_container:
+    name: "{{ nginx_container_name }}"
+    image: "{{ nginx_image }}"
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ nginx_host_port }}:{{ nginx_container_port }}"
+    volumes:
+      - "{{ nginx_content_dir }}:/usr/share/nginx/html:ro"
+    labels:
+      app: "{{ app_name }}"
+      version: "{{ app_version }}"
+      managed_by: "ansible"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+  tags: webapp
+
+- name: Verify nginx container is running
+  community.docker.docker_container_info:
+    name: "{{ nginx_container_name }}"
+  register: nginx_container_info
+  tags: webapp
+
+- name: Assert nginx container is in running state
+  ansible.builtin.assert:
+    that:
+      - nginx_container_info.container.State.Running
+    fail_msg: "Nginx container '{{ nginx_container_name }}' is NOT running!"
+    success_msg: "Nginx container '{{ nginx_container_name }}' is running ✅"
+  tags: webapp
+
+- name: Print webapp deployment summary
+  ansible.builtin.debug:
+    msg:
+      - "Container : {{ nginx_container_name }}"
+      - "Image     : {{ nginx_image }}"
+      - "Port      : {{ nginx_host_port }} → {{ nginx_container_port }}"
+      - "Content   : {{ nginx_content_dir }}"
+      - "Status    : Running"
+  tags: webapp

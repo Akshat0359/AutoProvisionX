@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1
+# ============================================================
+# AutoProvisionX — Test Target Container
+# Simulates a bare Ubuntu 22.04 server as the Ansible target.
+# ============================================================
+
+FROM ubuntu:22.04
+
+LABEL maintainer="AutoProvisionX"
+LABEL description="Ansible target server for AutoProvisionX CI testing"
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install Python and essential tooling required by Ansible
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      python3 \
+      python3-pip \
+      python3-apt \
+      sudo \
+      openssh-server \
+      curl \
+      ca-certificates \
+      gnupg \
+      lsb-release \
+      ufw \
+      iproute2 \
+      procps \
+      systemd \
+      systemd-sysv \
+      dbus \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink so 'python' resolves to python3
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Ensure pip is up to date
+RUN python3 -m pip install --quiet --upgrade pip
+
+# Configure SSH server (Ansible SSH connection fallback)
+RUN mkdir -p /var/run/sshd && \
+    ssh-keygen -A && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Create a test root password for SSH fallback
+RUN echo 'root:autoprovisionx' | chpasswd
+
+# Install Docker CLI (so the target can run docker commands after provisioning)
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+    > /etc/apt/sources.list.d/docker.list && \
+    apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      docker-ce-cli \
+      docker-compose-plugin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Expose SSH port
+EXPOSE 22
+
+# Use init as PID 1 to support service management
+CMD ["/sbin/init"]

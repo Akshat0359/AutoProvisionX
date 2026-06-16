@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ app_name }} — Automated Linux Server Provisioned by Ansible" />
+  <title>{{ app_name }} | Provisioning Success</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 1.5rem;
+      padding: 3rem 3.5rem;
+      max-width: 720px;
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 80px rgba(99,102,241,0.15);
+      backdrop-filter: blur(12px);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge::before { content: "●"; color: #22c55e; animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #c084fc, #fb7185);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 1rem;
+      padding: 1.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      font-family: 'Courier New', monospace;
+    }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .tech-tag {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 0.4rem;
+    }
+
+    .footer {
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      padding-top: 1.25rem;
+      font-size: 0.8rem;
+      color: #475569;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer .timestamp { font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">Provisioning Successful</div>
+
+    <h1>{{ app_name }}</h1>
+    <p class="subtitle">
+      This server was automatically provisioned and configured using
+      <strong style="color:#a5b4fc">Ansible</strong>,
+      <strong style="color:#a5b4fc">Docker</strong>, and
+      <strong style="color:#a5b4fc">GitHub Actions</strong> —
+      zero manual steps.
+    </p>
+
+    <div class="grid">
+      <div class="stat">
+        <div class="stat-label">Application</div>
+        <div class="stat-value">{{ app_name }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Version</div>
+        <div class="stat-value">v{{ app_version }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Environment</div>
+        <div class="stat-value">{{ app_environment }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Deploy User</div>
+        <div class="stat-value">{{ deploy_user }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Nginx Image</div>
+        <div class="stat-value">{{ nginx_image }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Timezone</div>
+        <div class="stat-value">{{ timezone }}</div>
+      </div>
+    </div>
+
+    <div class="tech-stack">
+      <span class="tech-tag">Ansible 2.14+</span>
+      <span class="tech-tag">Docker CE</span>
+      <span class="tech-tag">Nginx {{ nginx_image }}</span>
+      <span class="tech-tag">Ubuntu 22.04</span>
+      <span class="tech-tag">UFW Firewall</span>
+      <span class="tech-tag">GitHub Actions</span>
+    </div>
+
+    <div class="footer">
+      <span>AutoProvisionX &copy; 2024 — Infrastructure as Code</span>
+      <span class="timestamp">Rendered by Ansible Jinja2</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Ansible artifacts
+*.retry
+.ansible/
+
+# Sensitive data - NEVER commit real keys
+group_vars/vault.yml
+secrets/
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+.molecule/
+molecule/

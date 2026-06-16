@@ -1,0 +1,38 @@
+---
+# yamllint configuration for AutoProvisionX
+extends: default
+
+rules:
+  line-length:
+    max: 160
+    level: warning
+
+  truthy:
+    allowed-values: ["true", "false", "yes", "no"]
+    check-keys: false
+
+  comments:
+    min-spaces-from-content: 1
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  new-line-at-end-of-file: enable
+
+  trailing-spaces: enable
+
+ignore: |
+  .git/
+  .github/
+  scripts/
+  Dockerfile.test

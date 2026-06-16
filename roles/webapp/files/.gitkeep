@@ -1,0 +1,9 @@
+# roles/webapp/files/ — Static Files Directory
+#
+# Place any static files here that need to be copied to the target server
+# without Jinja2 templating (e.g., custom nginx.conf, images, scripts).
+#
+# Usage in tasks:
+#   ansible.builtin.copy:
+#     src: files/custom.conf
+#     dest: /etc/nginx/conf.d/custom.conf

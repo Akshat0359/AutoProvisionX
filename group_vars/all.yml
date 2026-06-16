@@ -1,0 +1,64 @@
+---
+# ============================================================
+# AutoProvisionX — Global Variables
+# ============================================================
+
+# --- Timezone ---
+timezone: "UTC"
+
+# --- Deploy User Configuration ---
+deploy_user: "deployer"
+deploy_user_groups:
+  - sudo
+  - docker
+
+# SSH public key injected into deploy user's authorized_keys.
+# Override this with your actual public key or via --extra-vars.
+deploy_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyForAutoProvisionXDoNotUseInProduction autoprovisionx@demo"
+
+# --- Package Management ---
+common_packages:
+  - git
+  - curl
+  - vim
+  - htop
+  - fail2ban
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - apt-transport-https
+  - software-properties-common
+
+# --- Firewall Configuration ---
+# Ports to allow inbound (TCP). SSH is always implicitly allowed by default.
+allowed_tcp_ports:
+  - 22
+  - 80
+  - 443
+
+# --- Docker Configuration ---
+docker_apt_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+docker_apt_key_fingerprint: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+docker_apt_repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# --- WebApp / Nginx Configuration ---
+nginx_container_name: "autoprovisionx-nginx"
+nginx_image: "nginx:1.25-alpine"
+nginx_host_port: 80
+nginx_container_port: 80
+
+# Directory on the target host where nginx content is stored
+nginx_content_dir: "/opt/autoprovisionx/html"
+
+# --- Application Metadata ---
+app_name: "AutoProvisionX"
+app_version: "1.0.0"
+app_environment: "production"
